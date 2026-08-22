@@ -10,11 +10,17 @@
     "./creative/image": "./src/creative/image.ts"
   },
   "scripts": {
-    "test": "node --import tsx --test src/creative/*.test.ts",
-    "creative:preview": "tsx src/creative/preview.ts"
+    "test": "node --import tsx --test src/*.test.ts src/creative/*.test.ts src/meta/*.test.ts src/workers/*.test.ts",
+    "creative:preview": "tsx src/creative/preview.ts",
+    "workers": "tsx src/workers/run.ts",
+    "tokens:check": "tsx src/tokens-check.ts",
+    "verify:pipeline": "tsx src/verify-pipeline.ts"
   },
   "dependencies": {
     "@genia/core": "*",
+    "@genia/linkbuilder": "*",
+    "bullmq": "^6.2.0",
+    "ioredis": "^6.0.0",
     "sharp": "^0.35.3"
   }
 }

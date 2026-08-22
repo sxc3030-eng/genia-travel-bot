@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@genia/core": "*",
+    "@genia/publisher": "*",
     "express": "^4.21.1"
   },
   "devDependencies": {

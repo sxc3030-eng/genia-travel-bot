@@ -10,7 +10,7 @@ Plan de projet complet : [`docs/PLAN.md`](docs/PLAN.md).
 - ✅ **Phase 1 — Link builder + Redirector** : constructeur d'URL Expedia affiliée, subid, service de redirection `/go/{hash}` avec log des clics.
 - 🟡 **Phase 2 — Scanner + scoring** : source Ticketmaster, filtre géo, déduplication, scoring 0–100, insertion en `new`. Code complet et testé hors-ligne ; **jalon non validé** — il exige une clé API Ticketmaster (voir ci-dessous).
 - ✅ **Phase 3 — Générateur de créa** : texte d'annonce + visuel PNG, mention « Publicité » intégrée au gabarit.
-- ⬜ Phase 4 — Publisher (Facebook / Instagram)
+- 🟡 **Phase 4 — Publisher** : queue BullMQ (une file par plateforme), workers FB/IG séparés, backoff exponentiel, throttling dur, garde d'approbation, surveillance des tokens. Pipeline vérifié de bout en bout avec l'API Meta bouchonnée ; **jalon non validé** — il exige une app Meta et des tokens réels.
 - ⬜ Phase 5 — Analytics + boucle
 - ⬜ Phase 6 — Automatisation
 
@@ -74,13 +74,34 @@ Deux règles encodées dans le générateur :
 
 La langue suit la **ville de départ** : YUL → français, YYZ → anglais.
 
+### Phase 4 — Publisher (jalon en attente des tokens Meta)
+
+```bash
+npm run verify:pipeline    # bout en bout avec l'API Meta bouchonnée (Postgres + Redis réels)
+npm run workers            # démarre les workers FB + IG (nécessite les vrais tokens)
+npm run tokens:check       # sort en code 1 si le token est mort ou expire dans ≤ 7 jours
+```
+
+**Ce qui bloque le jalon :** une app Meta, une page de test, un compte Instagram Business, et `META_PAGE_TOKEN` / `IG_BUSINESS_ID` dans `.env`. Le chemin d'appel réel vers Graph API n'est pas testé.
+
+Quatre décisions structurantes :
+
+| Sujet | Choix | Pourquoi |
+|---|---|---|
+| Files | **Une file par plateforme** (`posts-facebook`, `posts-instagram`) | Un worker BullMQ consomme *tous* les jobs de sa file, sans filtrer par nom. Deux workers sur une file partagée se volent les jobs et en perdent silencieusement. |
+| Throttling | **Dans le worker**, compté en base | Piège #3 du plan. Un cron qui espace les jobs ne protège pas d'un rattrapage de backlog ou d'un retry en rafale. |
+| Erreurs Meta | Classées en `transient` / `rate_limited` / `auth` / `permanent` | Un token expiré (code 190) échoue immédiatement au lieu de brûler 5 tentatives ; un throttle (code 4) attend 15 min au lieu d'échouer. |
+| Image Instagram | Servie par le redirecteur sur `/img/{plateforme}/{hash}.png` | L'API Instagram **va chercher** l'image elle-même : impossible d'envoyer des octets. Elle doit être à une URL publique. Elle est régénérée à la volée depuis la base, donc rien à stocker. |
+
+La garde d'approbation (décision #3) et la fenêtre J-21..J-56 (décision #4) sont appliquées **avant** la mise en file : un événement non approuvé ne devient jamais un job.
+
 ### Tests
 
 ```bash
 npm run test --workspaces
 ```
 
-55 tests, dont : l'ID affilié et le subid présents dans l'URL finale (piège #4), et la déduplication résistante aux variantes de titre (piège #2).
+91 tests, dont : l'ID affilié et le subid présents dans l'URL finale (piège #4), et la déduplication résistante aux variantes de titre (piège #2).
 
 ## Décisions (plan, section 7)
 

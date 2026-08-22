@@ -12,7 +12,8 @@
     "seed:test-offer": "npm run seed:test-offer -w @genia/linkbuilder",
     "scan": "npm run scan -w @genia/scanner",
     "creative:preview": "npm run creative:preview -w @genia/publisher",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "verify:pipeline": "npm run verify:pipeline -w @genia/publisher"
   },
   "devDependencies": {
     "@types/node": "^20.16.11",
