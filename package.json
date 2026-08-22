@@ -10,6 +10,7 @@
     "build": "npm run build --workspaces --if-present",
     "migrate": "tsx packages/core/src/migrate.ts",
     "seed:test-offer": "npm run seed:test-offer -w @genia/linkbuilder",
+    "scan": "npm run scan -w @genia/scanner",
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {

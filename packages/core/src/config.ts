@@ -27,6 +27,8 @@ export const config = {
   geoScope: (process.env.GEO_SCOPE ?? 'north_america') as 'north_america' | 'world',
   humanApprovalRequired: (process.env.HUMAN_APPROVAL_REQUIRED ?? 'true') === 'true',
   eventSourcePrimary: process.env.EVENT_SOURCE_PRIMARY ?? 'ticketmaster',
+  // Not `required()`: only the scanner needs it, and the redirector must boot without it.
+  ticketmasterApiKey: process.env.TICKETMASTER_API_KEY ?? '',
   meta: {
     appId: process.env.META_APP_ID ?? '',
     appSecret: process.env.META_APP_SECRET ?? '',

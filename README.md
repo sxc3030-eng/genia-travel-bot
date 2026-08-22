@@ -8,7 +8,7 @@ Plan de projet complet : [`docs/PLAN.md`](docs/PLAN.md).
 
 - ✅ **Phase 0 — Fondations** : monorepo npm workspaces, `docker-compose` (Postgres + Redis), migrations, config, logger.
 - ✅ **Phase 1 — Link builder + Redirector** : constructeur d'URL Expedia affiliée, subid, service de redirection `/go/{hash}` avec log des clics.
-- ⬜ Phase 2 — Scanner + scoring
+- 🟡 **Phase 2 — Scanner + scoring** : source Ticketmaster, filtre géo, déduplication, scoring 0–100, insertion en `new`. Code complet et testé hors-ligne ; **jalon non validé** — il exige une clé API Ticketmaster (voir ci-dessous).
 - ⬜ Phase 3 — Générateur de créa
 - ⬜ Phase 4 — Publisher (Facebook / Instagram)
 - ⬜ Phase 5 — Analytics + boucle
@@ -38,13 +38,32 @@ Le script insère un événement de test et construit une offre réelle via `bui
 psql "$DATABASE_URL" -c "select offer_id, ip_hash, clicked_at from clicks order by clicked_at desc limit 1;"
 ```
 
+### Phase 2 — Scanner (jalon en attente d'une clé API)
+
+```bash
+# 1. clé gratuite sur https://developer.ticketmaster.com/
+echo 'TICKETMASTER_API_KEY=ta_cle' >> .env
+npm run scan
+```
+
+`npm run scan` fait : `fetch` Ticketmaster → filtre `GEO_SCOPE` (CA/US/MX) → déduplication → scoring → insertion en `status='new'`, puis affiche le top 20 par score. Le jalon du plan (« 50 événements réels en base, sans doublons, triés par score ») se valide en lisant ce classement.
+
+Le scoring est sur 100, décomposé en quatre signaux auditables (`packages/scanner/src/scoring.ts`) :
+
+| Signal | Poids | Logique |
+|---|---|---|
+| Catégorie | 0–30 | festival > sport > concert > congrès |
+| Capacité | 0–25 | log-échelle ; 12 par défaut si inconnue (Ticketmaster ne la fournit pas) |
+| Délai | 0–25 | maximum dans la fenêtre J-21..J-56, décroît des deux côtés |
+| Destination | 0–20 | **0 si l'événement est dans une ville d'origine** (YUL/YYZ) — personne n'y réserve d'hôtel |
+
 ### Tests
 
 ```bash
-npm run test -w @genia/linkbuilder
+npm run test --workspaces
 ```
 
-Vérifie notamment que l'ID affilié et le subid apparaissent bien dans l'URL finale (piège #4 du plan, section 8).
+28 tests, dont : l'ID affilié et le subid présents dans l'URL finale (piège #4), et la déduplication résistante aux variantes de titre (piège #2).
 
 ## Décisions (plan, section 7)
 
