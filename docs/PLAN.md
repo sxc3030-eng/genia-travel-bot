@@ -6,6 +6,8 @@
 
 > Stack modifiable. Si tu préfères Python (FastAPI + Celery), l'architecture reste identique — seuls les noms de librairies changent.
 
+> **À ne jamais perdre de vue :** ce produit ne vend, ne revend et ne lie **jamais** de billets d'événement. L'événement est uniquement un **signal** (ville + dates + ampleur) qui déclenche un lien de voyage Expedia. Le seul produit monétisé est le voyage (hôtel / vol+hôtel). Concrètement : `EventSource` (étage 1, ex. Ticketmaster) alimente uniquement `events` (métadonnées) ; `offers.target_url` pointe toujours vers Expedia, jamais vers un billetier.
+
 ---
 
 ## 1. Vision en une phrase
