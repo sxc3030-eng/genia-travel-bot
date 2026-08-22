@@ -197,17 +197,15 @@ Cron : scan quotidien, mise en file, publication étalée. Alertes sur token exp
 
 ---
 
-## 7. Décisions à figer avant de coder
+## 7. Décisions figées
 
-Réponds à ces 5 questions, elles conditionnent le code :
+1. **Villes d'origine** — YUL + YYZ (Montréal + Toronto), les deux plus gros hubs canadiens. Multi-origine reste ouvert plus tard, mais l'ensemble de départ est fixé à ces deux pour garder le Scanner et le Link Builder simples. → `ORIGIN_AIRPORTS=YUL,YYZ`, `config.originAirports`.
+2. **Périmètre géographique** — Amérique du Nord seulement pour le MVP. Cohérent avec `EXPEDIA_POS=CA` déjà en place ; évite la complexité devise/fuseau horaire/langue avant que la boucle complète (étages 1 à 5) soit validée. → `GEO_SCOPE=north_america`, `config.geoScope`.
+3. **Validation humaine** — approbation manuelle les 3 premières semaines, comme recommandé. Les posts restent en file d'approbation avant publication tant que ce n'est pas désactivé explicitement. → `HUMAN_APPROVAL_REQUIRED=true`, `config.humanApprovalRequired`.
+4. **Fenêtre de publication** — J-21 à J-56 avant l'événement, comme recommandé. Déjà les valeurs par défaut. → `PUBLISH_WINDOW_MIN_DAYS=21`, `PUBLISH_WINDOW_MAX_DAYS=56`, `config.publishWindow`.
+5. **Sources d'événements** — Ticketmaster Discovery API comme source unique de départ pour la Phase 2 (« une seule source pour commencer, la plus fiable »). Couverture concerts/sports/festivals large en Amérique du Nord, API publique documentée, tier gratuit. → `EVENT_SOURCE_PRIMARY=ticketmaster`, `TICKETMASTER_API_KEY` (à obtenir sur developer.ticketmaster.com avant d'attaquer la Phase 2).
 
-1. **Villes d'origine** — uniquement YUL/YYZ, ou multi-origine ?
-2. **Périmètre géographique** — événements Amérique du Nord seulement, ou monde ?
-3. **Validation humaine** — publication 100 % auto, ou file d'approbation avant publication ? *(Recommandation : approbation manuelle les 3 premières semaines.)*
-4. **Fenêtre de publication** — je recommande J-21 à J-56 avant l'événement. La fenêtre de réservation voyage est là ; publier à J-3 ne convertit pas.
-5. **Sources d'événements** — lesquelles ton agent scanne déjà ?
-
-> Statut : pas encore répondues — voir README.md, section « Décisions ouvertes ». Aucune n'est nécessaire pour la Phase 1 (link builder + redirector) ; elles conditionnent les Phases 2 à 6.
+Ces 5 décisions sont maintenant reflétées dans `.env.example` et `packages/core/src/config.ts`. Elles ne changent rien à la Phase 1 (déjà construite) ; elles débloquent la Phase 2 (Scanner).
 
 ---
 

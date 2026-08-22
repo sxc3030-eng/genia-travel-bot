@@ -73,7 +73,7 @@ async function upsertTestEvent(): Promise<Event> {
 
 async function main(): Promise<void> {
   const event = await upsertTestEvent();
-  const offer = await buildOffer(event, { origin: 'YUL', destination: 'NYC', productType: 'hotel' });
+  const offer = await buildOffer(event, { origin: config.originAirports[0], destination: 'NYC', productType: 'hotel' });
 
   logger.info('seeded test offer', {
     offerId: offer.id,

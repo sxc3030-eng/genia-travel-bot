@@ -46,15 +46,17 @@ npm run test -w @genia/linkbuilder
 
 Vérifie notamment que l'ID affilié et le subid apparaissent bien dans l'URL finale (piège #4 du plan, section 8).
 
-## Décisions ouvertes (plan, section 7)
+## Décisions (plan, section 7)
 
-Ces 5 décisions ne bloquent pas la Phase 1 mais conditionnent le code des Phases 2 à 6 — à trancher avant d'attaquer le Scanner :
+Les 5 décisions sont figées et reflétées dans `.env.example` / `packages/core/src/config.ts` :
 
-1. **Villes d'origine** — uniquement YUL/YYZ, ou multi-origine ?
-2. **Périmètre géographique** — Amérique du Nord seulement, ou monde ?
-3. **Validation humaine** — publication 100 % auto, ou file d'approbation ? *(Recommandation du plan : approbation manuelle les 3 premières semaines.)*
-4. **Fenêtre de publication** — le plan recommande J-21 à J-56 avant l'événement (déjà les valeurs par défaut de `PUBLISH_WINDOW_MIN_DAYS` / `MAX_DAYS` dans `.env.example`).
-5. **Sources d'événements** — lesquelles scanner en premier pour la Phase 2 ?
+1. **Villes d'origine** — YUL + YYZ (Montréal + Toronto). → `ORIGIN_AIRPORTS`
+2. **Périmètre géographique** — Amérique du Nord seulement pour le MVP. → `GEO_SCOPE`
+3. **Validation humaine** — approbation manuelle activée (recommandation du plan pour les 3 premières semaines). → `HUMAN_APPROVAL_REQUIRED`
+4. **Fenêtre de publication** — J-21 à J-56 avant l'événement (recommandation du plan). → `PUBLISH_WINDOW_MIN_DAYS` / `MAX_DAYS`
+5. **Sources d'événements** — Ticketmaster Discovery API comme source unique de départ pour la Phase 2. → `EVENT_SOURCE_PRIMARY`, `TICKETMASTER_API_KEY` (clé à obtenir avant d'attaquer la Phase 2)
+
+Détail et justification de chaque choix : [`docs/PLAN.md`](docs/PLAN.md), section 7.
 
 ## Variables d'environnement
 

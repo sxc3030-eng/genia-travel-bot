@@ -22,6 +22,11 @@ export const config = {
     pos: process.env.EXPEDIA_POS ?? 'CA',
   },
   redirectBaseUrl: process.env.REDIRECT_BASE_URL ?? 'http://localhost:3000/go',
+  // Decisions — plan section 7 (docs/PLAN.md)
+  originAirports: (process.env.ORIGIN_AIRPORTS ?? 'YUL,YYZ').split(',').map((s) => s.trim()),
+  geoScope: (process.env.GEO_SCOPE ?? 'north_america') as 'north_america' | 'world',
+  humanApprovalRequired: (process.env.HUMAN_APPROVAL_REQUIRED ?? 'true') === 'true',
+  eventSourcePrimary: process.env.EVENT_SOURCE_PRIMARY ?? 'ticketmaster',
   meta: {
     appId: process.env.META_APP_ID ?? '',
     appSecret: process.env.META_APP_SECRET ?? '',
