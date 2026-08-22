@@ -11,7 +11,7 @@ Plan de projet complet : [`docs/PLAN.md`](docs/PLAN.md).
 - 🟡 **Phase 2 — Scanner + scoring** : source Ticketmaster, filtre géo, déduplication, scoring 0–100, insertion en `new`. Code complet et testé hors-ligne ; **jalon non validé** — il exige une clé API Ticketmaster (voir ci-dessous).
 - ✅ **Phase 3 — Générateur de créa** : texte d'annonce + visuel PNG, mention « Publicité » intégrée au gabarit.
 - 🟡 **Phase 4 — Publisher** : queue BullMQ (une file par plateforme), workers FB/IG séparés, backoff exponentiel, throttling dur, garde d'approbation, surveillance des tokens. Pipeline vérifié de bout en bout avec l'API Meta bouchonnée ; **jalon non validé** — il exige une app Meta et des tokens réels.
-- ⬜ Phase 5 — Analytics + boucle
+- 🟡 **Phase 5 — Analytics + boucle** : import CSV du rapport d'affiliation (idempotent), jointure sur subid, rapport clics → conversions → revenu par catégorie / origine / ville. Vérifié en base ; **jalon non validé** — il exige un vrai rapport d'affiliation.
 - ⬜ Phase 6 — Automatisation
 
 ## Démarrage local
@@ -95,13 +95,36 @@ Quatre décisions structurantes :
 
 La garde d'approbation (décision #3) et la fenêtre J-21..J-56 (décision #4) sont appliquées **avant** la mise en file : un événement non approuvé ne devient jamais un job.
 
+### Phase 5 — Analytics (jalon en attente d'un vrai rapport)
+
+```bash
+npm run analytics:import -- rapport.csv [partnerize|impact]
+npm run analytics:report              # ou: report origin / report city
+npm run analytics:verify              # vérification bout en bout en base
+```
+
+Le rapport produit le tableau du jalon : **axe → clics → conversions → revenu**, avec le taux de conversion et le revenu par clic.
+
+Quatre règles qui évitent des chiffres faux :
+
+| Règle | Pourquoi |
+|---|---|
+| **Seuls `approved` et `paid` comptent comme revenu** | `pending` peut encore être rejeté, `rejected` est de l'argent qui n'a jamais existé. Les inclure promet un revenu qui n'arrivera jamais. Ils sont affichés à part. |
+| **Jamais d'addition entre devises** | 80 CAD + 20 USD ≠ 100. Le revenu est ventilé par devise, et `rev/clic` reste vide quand il y en a plusieurs. |
+| **Upsert sur (réseau, id externe)** | Les rapports d'affiliation se réimportent constamment. Sans clé stable, chaque réimport dupliquait les conversions et gonflait le revenu. |
+| **Clics et conversions agrégés séparément** | Les joindre d'un coup les multiplie entre eux : 3 clics et 2 conversions sur la même offre deviendraient 6 de chaque. |
+
+Un statut inconnu, un montant illisible ou un subid absent font **ignorer la ligne** (et le compte est rapporté) plutôt que de deviner.
+
+**La boucle de rétroaction (`loop.ts`) n'est pas branchée sur le scoring**, volontairement. Avec zéro conversion en base, toutes les catégories mesurent zéro revenu par clic : un multiplicateur naïf écraserait tous les scores et classerait sur du bruit. Il faut un vrai rapport d'abord — `MIN_CLICKS_FOR_SIGNAL` (200 clics) est le garde-fou qui décide quand une catégorie a le droit à un avis.
+
 ### Tests
 
 ```bash
 npm run test --workspaces
 ```
 
-91 tests, dont : l'ID affilié et le subid présents dans l'URL finale (piège #4), et la déduplication résistante aux variantes de titre (piège #2).
+123 tests, dont : l'ID affilié et le subid présents dans l'URL finale (piège #4), et la déduplication résistante aux variantes de titre (piège #2).
 
 ## Décisions (plan, section 7)
 

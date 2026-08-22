@@ -13,7 +13,10 @@
     "scan": "npm run scan -w @genia/scanner",
     "creative:preview": "npm run creative:preview -w @genia/publisher",
     "test": "npm run test --workspaces --if-present",
-    "verify:pipeline": "npm run verify:pipeline -w @genia/publisher"
+    "verify:pipeline": "npm run verify:pipeline -w @genia/publisher",
+    "analytics:import": "npm run import -w @genia/analytics",
+    "analytics:report": "npm run report -w @genia/analytics",
+    "analytics:verify": "npm run verify -w @genia/analytics"
   },
   "devDependencies": {
     "@types/node": "^20.16.11",

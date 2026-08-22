@@ -1,0 +1,21 @@
+{
+  "name": "@genia/analytics",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./import": "./src/import.ts",
+    "./report": "./src/report.ts"
+  },
+  "scripts": {
+    "test": "node --import tsx --test src/*.test.ts",
+    "import": "tsx src/cli-import.ts",
+    "report": "tsx src/cli-report.ts",
+    "verify": "tsx src/verify-report.ts"
+  },
+  "dependencies": {
+    "@genia/core": "*"
+  }
+}
