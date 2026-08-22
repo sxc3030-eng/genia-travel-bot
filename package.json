@@ -1,0 +1,20 @@
+{
+  "name": "genia-travel-bot",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @genia/redirector",
+    "build": "npm run build --workspaces --if-present",
+    "migrate": "tsx packages/core/src/migrate.ts",
+    "seed:test-offer": "npm run seed:test-offer -w @genia/linkbuilder",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^20.16.11",
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.3"
+  }
+}

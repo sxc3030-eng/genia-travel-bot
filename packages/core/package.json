@@ -1,0 +1,20 @@
+{
+  "name": "@genia/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./db": "./src/db.ts",
+    "./config": "./src/config.ts",
+    "./logger": "./src/logger.ts"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "pg": "^8.13.0"
+  },
+  "devDependencies": {
+    "@types/pg": "^8.11.10"
+  }
+}

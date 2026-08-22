@@ -1,0 +1,19 @@
+{
+  "name": "@genia/linkbuilder",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./expedia": "./src/expedia.ts",
+    "./subid": "./src/subid.ts"
+  },
+  "scripts": {
+    "test": "node --import tsx --test src/expedia.test.ts",
+    "seed:test-offer": "tsx src/seed-test-offer.ts"
+  },
+  "dependencies": {
+    "@genia/core": "*"
+  }
+}
