@@ -32,7 +32,7 @@ npm run dev                 # démarre le redirector, se connecte à la base
 npm run seed:test-offer
 ```
 
-Le script insère un événement de test et construit une offre réelle via `buildOffer()` ; il logue l'URL à ouvrir, du type `http://localhost:3000/go/<hash>`. Ouvre-la : tu dois atterrir sur une URL Expedia contenant `EXPEDIA_AFFILIATE_ID` et le subid, et une ligne doit apparaître dans la table `clicks`.
+Le script insère un événement de test et construit **une offre par ville d'origine** via `buildOffersForEvent()` — soit deux offres (YUL et YYZ), chacune avec son propre `short_hash` et son propre `subid`. Il logue les URL à ouvrir, du type `http://localhost:3000/go/<hash>`. Ouvre-les : tu dois atterrir sur une URL Expedia contenant `EXPEDIA_AFFILIATE_ID` et le subid, et une ligne doit apparaître dans la table `clicks` pour chacune.
 
 ```bash
 psql "$DATABASE_URL" -c "select offer_id, ip_hash, clicked_at from clicks order by clicked_at desc limit 1;"
@@ -69,7 +69,7 @@ npm run test --workspaces
 
 Les 5 décisions sont figées et reflétées dans `.env.example` / `packages/core/src/config.ts` :
 
-1. **Villes d'origine** — YUL + YYZ (Montréal + Toronto). → `ORIGIN_AIRPORTS`
+1. **Villes d'origine** — YUL + YYZ (Montréal + Toronto). → `ORIGIN_AIRPORTS`. Un événement approuvé produit **une offre par origine**, chacune avec son subid, pour que les conversions restent attribuables à la ville de départ.
 2. **Périmètre géographique** — Amérique du Nord seulement pour le MVP. → `GEO_SCOPE`
 3. **Validation humaine** — approbation manuelle activée (recommandation du plan pour les 3 premières semaines). → `HUMAN_APPROVAL_REQUIRED`
 4. **Fenêtre de publication** — J-21 à J-56 avant l'événement (recommandation du plan). → `PUBLISH_WINDOW_MIN_DAYS` / `MAX_DAYS`

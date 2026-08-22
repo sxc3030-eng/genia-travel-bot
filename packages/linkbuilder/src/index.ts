@@ -42,7 +42,7 @@ function generateShortHash(): string {
 /** Contract from plan section 5: buildOffer(event, route) -> Offer, persisted. */
 export async function buildOffer(event: Event, route: Route): Promise<Offer> {
   const { checkIn, checkOut } = buildOfferDates(event.startsAt, event.endsAt);
-  const subid = buildSubid(event.id, 'direct');
+  const subid = buildSubid({ eventId: event.id, origin: route.origin, platform: 'direct' });
 
   const searchUrl = buildExpediaSearchUrl({
     destination: `${event.city}, ${event.country}`,
@@ -73,4 +73,27 @@ export async function buildOffer(event: Event, route: Route): Promise<Offer> {
   );
 
   return mapOfferRow(result.rows[0]);
+}
+
+export interface MultiOriginOptions {
+  /** Defaults to every configured ORIGIN_AIRPORTS entry (YUL + YYZ). */
+  origins?: string[];
+  productType?: Offer['productType'];
+}
+
+/**
+ * We sell departures from both Montreal and Toronto, so an approved event
+ * yields one offer per origin — each with its own short_hash and subid, so
+ * clicks and conversions stay attributable to the origin that produced them.
+ */
+export async function buildOffersForEvent(event: Event, options: MultiOriginOptions = {}): Promise<Offer[]> {
+  const origins = options.origins ?? config.originAirports;
+  const productType = options.productType ?? 'hotel';
+  const offers: Offer[] = [];
+
+  for (const origin of origins) {
+    offers.push(await buildOffer(event, { origin, destination: event.city, productType }));
+  }
+
+  return offers;
 }

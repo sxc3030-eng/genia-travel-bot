@@ -10,7 +10,7 @@
     "./subid": "./src/subid.ts"
   },
   "scripts": {
-    "test": "node --import tsx --test src/expedia.test.ts",
+    "test": "node --import tsx --test src/*.test.ts",
     "seed:test-offer": "tsx src/seed-test-offer.ts"
   },
   "dependencies": {

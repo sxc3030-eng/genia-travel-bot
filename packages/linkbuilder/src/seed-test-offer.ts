@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { config, logger, type Event } from '@genia/core';
 import { pool, query } from '@genia/core/db';
-import { buildOffer } from './index.js';
+import { buildOffersForEvent } from './index.js';
 
 interface EventRow {
   id: string;
@@ -73,14 +73,17 @@ async function upsertTestEvent(): Promise<Event> {
 
 async function main(): Promise<void> {
   const event = await upsertTestEvent();
-  const offer = await buildOffer(event, { origin: config.originAirports[0], destination: 'NYC', productType: 'hotel' });
+  const offers = await buildOffersForEvent(event);
 
-  logger.info('seeded test offer', {
-    offerId: offer.id,
-    shortHash: offer.shortHash,
-    subid: offer.subid,
-    openInBrowser: `${config.redirectBaseUrl}/${offer.shortHash}`,
-  });
+  for (const offer of offers) {
+    logger.info('seeded test offer', {
+      origin: offer.origin,
+      offerId: offer.id,
+      shortHash: offer.shortHash,
+      subid: offer.subid,
+      openInBrowser: `${config.redirectBaseUrl}/${offer.shortHash}`,
+    });
+  }
 
   await pool.end();
 }

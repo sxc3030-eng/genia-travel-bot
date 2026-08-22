@@ -106,7 +106,9 @@ Monorepo avec workspaces npm (ou pnpm). Un seul `npm install` à la racine.
 | product_type | text | `hotel` / `flight_hotel` |
 | target_url | text | URL Expedia complète avec affilié |
 | short_hash | text UNIQUE | segment de `genia.ca/go/{hash}` |
-| subid | text | `evt{id}-{platform}-{yyyymmdd}` |
+| subid | text UNIQUE | `evt{id}-{origin}-{platform}-{yyyymmdd}` — voir note ci-dessous |
+
+> **Écart assumé par rapport au plan v1.0 :** le subid porte aussi l'**origine**. Vendre au départ de YUL *et* YYZ signifie qu'un événement produit deux offres ; avec le format d'origine (`evt{id}-{platform}-{yyyymmdd}`) ces deux offres partageaient un subid identique, et comme `conversions` fait sa jointure sur `offers.subid`, le revenu n'était plus attribuable à la ville de départ. La contrainte `UNIQUE` sur `offers.subid` (migration 003) empêche la régression.
 
 ### `posts`
 | colonne | type | note |
