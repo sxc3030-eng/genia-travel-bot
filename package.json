@@ -11,6 +11,7 @@
     "migrate": "tsx packages/core/src/migrate.ts",
     "seed:test-offer": "npm run seed:test-offer -w @genia/linkbuilder",
     "scan": "npm run scan -w @genia/scanner",
+    "creative:preview": "npm run creative:preview -w @genia/publisher",
     "test": "npm run test --workspaces --if-present"
   },
   "devDependencies": {

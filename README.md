@@ -9,7 +9,7 @@ Plan de projet complet : [`docs/PLAN.md`](docs/PLAN.md).
 - ✅ **Phase 0 — Fondations** : monorepo npm workspaces, `docker-compose` (Postgres + Redis), migrations, config, logger.
 - ✅ **Phase 1 — Link builder + Redirector** : constructeur d'URL Expedia affiliée, subid, service de redirection `/go/{hash}` avec log des clics.
 - 🟡 **Phase 2 — Scanner + scoring** : source Ticketmaster, filtre géo, déduplication, scoring 0–100, insertion en `new`. Code complet et testé hors-ligne ; **jalon non validé** — il exige une clé API Ticketmaster (voir ci-dessous).
-- ⬜ Phase 3 — Générateur de créa
+- ✅ **Phase 3 — Générateur de créa** : texte d'annonce + visuel PNG, mention « Publicité » intégrée au gabarit.
 - ⬜ Phase 4 — Publisher (Facebook / Instagram)
 - ⬜ Phase 5 — Analytics + boucle
 - ⬜ Phase 6 — Automatisation
@@ -57,13 +57,30 @@ Le scoring est sur 100, décomposé en quatre signaux auditables (`packages/scan
 | Délai | 0–25 | maximum dans la fenêtre J-21..J-56, décroît des deux côtés |
 | Destination | 0–20 | **0 si l'événement est dans une ville d'origine** (YUL/YYZ) — personne n'y réserve d'hôtel |
 
+### Phase 3 — Créas
+
+```bash
+npm run creative:preview        # écrit packages/publisher/creative-preview/index.html
+```
+
+Génère 10 créas (visuel PNG + texte) et une planche-contact HTML pour la revue manuelle du jalon. Utilise les offres réelles en base dès qu'il y en a assez, sinon des fixtures.
+
+**Choix : gabarits, pas de LLM.** Le jalon exige qu'aucune créa ne soit « embarrassante ou fausse ». Un gabarit n'interpole que des champs vérifiés en base (titre, ville, dates) et ne peut donc rien inventer — pas de prix, pas de rabais, pas de disponibilité. Un LLM pourrait halluciner exactement ces faits-là. L'interface reste ouverte si tu veux brancher un générateur LLM plus tard.
+
+Deux règles encodées dans le générateur :
+
+- **La mention « Publicité » est produite par le gabarit**, jamais ajoutée à la main — dans le texte *et* dans le visuel. Des tests vérifient sa présence sur les 2 plateformes × 2 langues.
+- **Instagram ne rend pas les liens cliquables dans les légendes.** Le texte IG ne contient donc aucune URL (ce serait du bruit mort) et renvoie vers le lien en bio ; l'URL est retournée à part pour la bio/story.
+
+La langue suit la **ville de départ** : YUL → français, YYZ → anglais.
+
 ### Tests
 
 ```bash
 npm run test --workspaces
 ```
 
-28 tests, dont : l'ID affilié et le subid présents dans l'URL finale (piège #4), et la déduplication résistante aux variantes de titre (piège #2).
+55 tests, dont : l'ID affilié et le subid présents dans l'URL finale (piège #4), et la déduplication résistante aux variantes de titre (piège #2).
 
 ## Décisions (plan, section 7)
 
