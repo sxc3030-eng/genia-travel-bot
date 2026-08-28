@@ -7,15 +7,30 @@ import { queueNameFor } from './queue-names.js';
 export { queueNameFor } from './queue-names.js';
 
 
-/** BullMQ requires this to be null, otherwise blocking commands throw on retry. */
-export const connection = new Redis(config.redisUrl, { maxRetriesPerRequest: null });
+let redis: Redis | undefined;
+
+/**
+ * Opened on first use, not at import time.
+ *
+ * A module-level `new Redis(...)` connected as soon as anything imported this
+ * package — including code that only wanted `checkToken` — which opened a
+ * socket nothing would close and hung any process that merely imported the
+ * package (the scheduler's tests never exited).
+ *
+ * `maxRetriesPerRequest` must be null or BullMQ's blocking commands throw on
+ * retry.
+ */
+export function getConnection(): Redis {
+  if (!redis) redis = new Redis(config.redisUrl, { maxRetriesPerRequest: null });
+  return redis;
+}
 
 const queues = new Map<Platform, Queue<QueuedPostJob>>();
 
 export function queueFor(platform: Platform): Queue<QueuedPostJob> {
   let queue = queues.get(platform);
   if (!queue) {
-    queue = new Queue<QueuedPostJob>(queueNameFor(platform), { connection });
+    queue = new Queue<QueuedPostJob>(queueNameFor(platform), { connection: getConnection() });
     queues.set(platform, queue);
   }
   return queue;
@@ -66,5 +81,8 @@ export async function enqueuePost(job: PostJob): Promise<string> {
 export async function closeQueue(): Promise<void> {
   await Promise.all([...queues.values()].map((queue) => queue.close()));
   queues.clear();
-  await connection.quit();
+  if (redis) {
+    await redis.quit();
+    redis = undefined;
+  }
 }

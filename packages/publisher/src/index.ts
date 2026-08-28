@@ -4,7 +4,7 @@ export * from './gate.js';
 export * from './throttle.js';
 export * from './tokens.js';
 export * from './plan.js';
-export { enqueuePost, queueFor, queueNameFor, closeQueue, DEFAULT_JOB_OPTIONS, type QueuedPostJob } from './queue.js';
+export { enqueuePost, queueFor, queueNameFor, getConnection, closeQueue, DEFAULT_JOB_OPTIONS, type QueuedPostJob } from './queue.js';
 export { MetaClient, type MetaClientOptions, type PublishResult } from './meta/client.js';
 export { MetaApiError, classifyMetaError, metaErrorFrom, type FailureKind } from './meta/errors.js';
 export { createFacebookWorker } from './workers/facebook.js';

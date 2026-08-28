@@ -1,6 +1,6 @@
 import { Worker } from 'bullmq';
 import { logger } from '@genia/core';
-import { connection, queueNameFor, type QueuedPostJob } from '../queue.js';
+import { getConnection, queueNameFor, type QueuedPostJob } from '../queue.js';
 import { buildClient, runPublishJob, type PublishDeps } from './publish.js';
 
 /**
@@ -14,7 +14,7 @@ export function createFacebookWorker(deps?: Partial<PublishDeps>): Worker<Queued
   const worker = new Worker<QueuedPostJob>(
     queueNameFor('facebook'),
     async (job) => runPublishJob(job, 'facebook', publishDeps),
-    { connection, concurrency: 1 }
+    { connection: getConnection(), concurrency: 1 }
   );
 
   worker.on('failed', (job, err) => {

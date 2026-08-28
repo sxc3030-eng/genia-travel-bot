@@ -105,6 +105,31 @@ export class MetaClient {
     return { externalId: published.id };
   }
 
+  /**
+   * Removes a published post — used to unpublish an ad for an event that was
+   * cancelled (piège #6). Meta returns 404/code 100 for a post already gone,
+   * which is treated as success: the goal is "not published any more", and it
+   * already is.
+   */
+  async deletePost(externalId: string): Promise<{ deleted: boolean }> {
+    const doFetch = this.options.fetchImpl ?? fetch;
+    const url = `${GRAPH_BASE}/${externalId}?access_token=${encodeURIComponent(this.options.pageToken)}`;
+
+    let response: Response;
+    try {
+      response = await doFetch(url, { method: 'DELETE' });
+    } catch (cause) {
+      throw transportError(cause);
+    }
+
+    const payload = (await response.json().catch(() => ({}))) as MetaErrorBody;
+
+    if (response.status === 404 || payload.error?.code === 100) return { deleted: false };
+    if (!response.ok || payload.error) throw metaErrorFrom(payload, response.status);
+
+    return { deleted: true };
+  }
+
   private async waitForContainer(containerId: string): Promise<void> {
     const attempts = this.options.containerPollAttempts ?? 10;
     const delay = this.options.containerPollDelayMs ?? 3000;

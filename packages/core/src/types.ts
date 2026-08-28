@@ -87,6 +87,8 @@ export interface RawEvent {
   startsAt: Date;
   endsAt?: Date;
   sourceUrl: string;
+  /** The source's own id, needed to re-verify the event at J-7 (piège #6). */
+  sourceEventId?: string;
 }
 
 export interface EventSource {

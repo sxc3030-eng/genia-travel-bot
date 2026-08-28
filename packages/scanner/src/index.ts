@@ -5,7 +5,15 @@ import { originCitiesFor, scoreEvent, type ScoringOptions } from './scoring.js';
 
 export { buildDedupeKey, dedupeBatch, isNearDuplicate, slugify } from './dedupe.js';
 export * from './scoring.js';
-export { TicketmasterSource, mapTicketmasterEvent, mapCategory } from './sources/ticketmaster.js';
+export {
+  TicketmasterSource,
+  mapTicketmasterEvent,
+  mapCategory,
+  mapSourceStatus,
+  fetchEventState,
+  type SourceEventStatus,
+  type SourceEventState,
+} from './sources/ticketmaster.js';
 
 const NORTH_AMERICA = new Set(['CA', 'US', 'MX']);
 
@@ -80,8 +88,8 @@ export async function runScan(source: EventSource): Promise<ScanResult> {
     }
 
     const result = await query(
-      `INSERT INTO events (dedupe_key, title, category, city, country, venue, capacity, starts_at, ends_at, source, source_url, score, status)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'new')
+      `INSERT INTO events (dedupe_key, title, category, city, country, venue, capacity, starts_at, ends_at, source, source_url, score, status, source_event_id)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'new', $13)
        ON CONFLICT (dedupe_key) DO NOTHING`,
       [
         buildDedupeKey(event),
@@ -96,6 +104,7 @@ export async function runScan(source: EventSource): Promise<ScanResult> {
         source.name,
         event.sourceUrl,
         scoreEvent(event, scoringOptions),
+        event.sourceEventId ?? null,
       ]
     );
     if (result.rowCount) inserted++;

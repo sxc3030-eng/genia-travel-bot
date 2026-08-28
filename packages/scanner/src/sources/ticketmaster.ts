@@ -29,9 +29,14 @@ interface TmClassification {
 }
 
 interface TmEvent {
+  id?: string;
   name?: string;
   url?: string;
-  dates?: { start?: { dateTime?: string; localDate?: string }; end?: { dateTime?: string; localDate?: string } };
+  dates?: {
+    start?: { dateTime?: string; localDate?: string };
+    end?: { dateTime?: string; localDate?: string };
+    status?: { code?: string };
+  };
   classifications?: TmClassification[];
   _embedded?: { venues?: TmVenue[] };
 }
@@ -95,6 +100,7 @@ export function mapTicketmasterEvent(event: TmEvent): RawEvent | null {
     startsAt,
     ...(endsAt ? { endsAt } : {}),
     sourceUrl: event.url ?? '',
+    ...(event.id ? { sourceEventId: event.id } : {}),
   };
 }
 
@@ -149,4 +155,57 @@ export class TicketmasterSource implements EventSource {
 
     return collected;
   }
+}
+
+/**
+ * Normalised lifecycle of an event at the source (piège #6). `cancelled` and
+ * `postponed` both mean the trip no longer makes sense; `rescheduled` means the
+ * date moved, so the offer's check-in dates are now wrong.
+ */
+export type SourceEventStatus = 'live' | 'cancelled' | 'postponed' | 'rescheduled' | 'unknown';
+
+export function mapSourceStatus(code: string | undefined): SourceEventStatus {
+  switch ((code ?? '').toLowerCase()) {
+    case 'onsale':
+    case 'offsale':
+      return 'live';
+    case 'cancelled':
+    case 'canceled':
+      return 'cancelled';
+    case 'postponed':
+      return 'postponed';
+    case 'rescheduled':
+      return 'rescheduled';
+    default:
+      return 'unknown';
+  }
+}
+
+export interface SourceEventState {
+  status: SourceEventStatus;
+  startsAt: Date | null;
+}
+
+/**
+ * Re-reads a single event from the Discovery API, for the J-7 re-check.
+ *
+ * A 404 means the listing is gone, which we treat as cancelled: an event the
+ * source no longer knows about should not keep a live ad pointing at it.
+ */
+export async function fetchEventState(
+  sourceEventId: string,
+  options: { apiKey: string; fetchImpl?: typeof fetch }
+): Promise<SourceEventState> {
+  const doFetch = options.fetchImpl ?? fetch;
+  const url = `https://app.ticketmaster.com/discovery/v2/events/${encodeURIComponent(sourceEventId)}.json?apikey=${encodeURIComponent(options.apiKey)}`;
+
+  const response = await doFetch(url);
+  if (response.status === 404) return { status: 'cancelled', startsAt: null };
+  if (!response.ok) throw new Error(`Ticketmaster API ${response.status} for event ${sourceEventId}`);
+
+  const body = (await response.json()) as TmEvent;
+  return {
+    status: mapSourceStatus(body.dates?.status?.code),
+    startsAt: parseDate(body.dates?.start),
+  };
 }

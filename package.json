@@ -16,7 +16,11 @@
     "verify:pipeline": "npm run verify:pipeline -w @genia/publisher",
     "analytics:import": "npm run import -w @genia/analytics",
     "analytics:report": "npm run report -w @genia/analytics",
-    "analytics:verify": "npm run verify -w @genia/analytics"
+    "analytics:verify": "npm run verify -w @genia/analytics",
+    "scheduler": "npm run start -w @genia/scheduler",
+    "schedule:job": "npm run job -w @genia/scheduler",
+    "alerts": "tsx packages/scheduler/src/cli-alerts.ts",
+    "schedule:verify": "npm run verify -w @genia/scheduler"
   },
   "devDependencies": {
     "@types/node": "^20.16.11",

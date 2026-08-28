@@ -1,0 +1,25 @@
+{
+  "name": "@genia/scheduler",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./spread": "./src/spread.ts"
+  },
+  "scripts": {
+    "test": "node --import tsx --test src/*.test.ts src/jobs/*.test.ts",
+    "start": "tsx src/run.ts",
+    "job": "tsx src/run-once.ts",
+    "verify": "tsx src/verify-cancellation.ts"
+  },
+  "dependencies": {
+    "@genia/analytics": "*",
+    "@genia/core": "*",
+    "@genia/linkbuilder": "*",
+    "@genia/publisher": "*",
+    "@genia/scanner": "*",
+    "node-cron": "^4.6.0"
+  }
+}

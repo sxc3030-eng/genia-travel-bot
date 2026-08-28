@@ -12,7 +12,7 @@ Plan de projet complet : [`docs/PLAN.md`](docs/PLAN.md).
 - ✅ **Phase 3 — Générateur de créa** : texte d'annonce + visuel PNG, mention « Publicité » intégrée au gabarit.
 - 🟡 **Phase 4 — Publisher** : queue BullMQ (une file par plateforme), workers FB/IG séparés, backoff exponentiel, throttling dur, garde d'approbation, surveillance des tokens. Pipeline vérifié de bout en bout avec l'API Meta bouchonnée ; **jalon non validé** — il exige une app Meta et des tokens réels.
 - 🟡 **Phase 5 — Analytics + boucle** : import CSV du rapport d'affiliation (idempotent), jointure sur subid, rapport clics → conversions → revenu par catégorie / origine / ville. Vérifié en base ; **jalon non validé** — il exige un vrai rapport d'affiliation.
-- ⬜ Phase 6 — Automatisation
+- 🟡 **Phase 6 — Automatisation** : cron (scan, re-vérification J-7, tokens, planification étalée, balayage des échecs), alertes durables en base. Vérifié en base ; **jalon non validé** — « 7 jours sans intervention » ne se constate qu'en tournant 7 jours.
 
 ## Démarrage local
 
@@ -118,13 +118,38 @@ Un statut inconnu, un montant illisible ou un subid absent font **ignorer la lig
 
 **La boucle de rétroaction (`loop.ts`) n'est pas branchée sur le scoring**, volontairement. Avec zéro conversion en base, toutes les catégories mesurent zéro revenu par clic : un multiplicateur naïf écraserait tous les scores et classerait sur du bruit. Il faut un vrai rapport d'abord — `MIN_CLICKS_FOR_SIGNAL` (200 clics) est le garde-fou qui décide quand une catégorie a le droit à un avis.
 
+### Phase 6 — Automatisation
+
+```bash
+npm run scheduler                        # démarre les tâches planifiées
+npm run schedule:job -- <nom>            # lance une tâche à la main
+npm run schedule:verify                  # vérifie la dépublication (piège #6)
+npm run alerts                           # liste les alertes ouvertes
+```
+
+Cinq tâches, en UTC. **L'ordre compte** :
+
+| Heure | Tâche | Rôle |
+|---|---|---|
+| 03:00 | `scan` | les nouveaux événements arrivent avant toute planification |
+| 04:00 | `verify-events` | les événements annulés sont retirés **avant** que des annonces partent |
+| 05:00 | `check-token` | un token mort est connu avant la première publication |
+| 06:00 | `plan-posts` | met en file, étalé entre 10 h et 20 h |
+| 23:00 | `check-failed-posts` | balaie ce qui a échoué dans la journée |
+
+**Piège #6 — événement annulé.** À J-7, chaque événement est re-vérifié auprès de la source. S'il est annulé, reporté, ou disparu de la source (404), les annonces publiées sont **supprimées chez Meta**, les posts en file sont stoppés avant publication, et une alerte est levée. Un statut inconnu ne déclenche **rien** : dépublier sur un état qu'on ne comprend pas détruirait des campagnes qui fonctionnent. Un événement sans id source est ignoré, pas deviné.
+
+**Les alertes sont durables** (table `alerts`), pas seulement journalisées : sept jours sans surveillance ne fonctionne que si une panne du jour 2 est encore visible au jour 7. Elles sont dédupliquées (12 h par défaut) pour qu'un token bloqué n'écrive pas des milliers de lignes. `ALERT_WEBHOOK_URL` permet en plus de pousser vers Slack ou autre ; si le webhook tombe, l'alerte est quand même enregistrée.
+
+**Une tâche qui échoue ne tue jamais le planificateur** — sinon une mauvaise nuit arrêterait les six suivantes.
+
 ### Tests
 
 ```bash
 npm run test --workspaces
 ```
 
-123 tests, dont : l'ID affilié et le subid présents dans l'URL finale (piège #4), et la déduplication résistante aux variantes de titre (piège #2).
+139 tests, dont : l'ID affilié et le subid présents dans l'URL finale (piège #4), et la déduplication résistante aux variantes de titre (piège #2).
 
 ## Décisions (plan, section 7)
 
